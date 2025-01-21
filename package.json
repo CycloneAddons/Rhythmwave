@@ -1,0 +1,44 @@
+{
+    "name": "rhythmwave",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "RhythmWave is an advanced music player with a visualizer feature, including backend functionality with Flask (Python) and Node.js, and a modern frontend.",
+    "scripts": {
+      "start": "npm run install-backend && npm run install-frontend && concurrently \"npm run start-backend-node-terminal\" \"npm run start-backend-python-terminal\" \"npm run start-frontend-terminal\"",
+      "install-backend": "cd backend && npm install && pip install -r requirements.txt",
+      "install-frontend": "cd frontend && npm install",
+      "start-backend-node": "cd backend && node index.js",
+      "start-backend-python": "cd backend && python main.py",
+      "start-backend-node-terminal": "start cmd /k \"npm run start-backend-node\"",
+      "start-backend-python-terminal": "start cmd /k \"npm run start-backend-python\"",
+      "start-frontend": "cd frontend && npm start",
+      "start-frontend-terminal": "start cmd /k \"npm run start-frontend\""
+    },
+    "dependencies": {
+      "concurrently": "^7.0.0"
+    },
+    "devDependencies": {},
+    "author": "Cyclone Addons",
+    "license": "MIT",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/CycloneAddons/rhythmwave.git"
+    },
+    "keywords": [
+      "music",
+      "music player",
+      "audio player",
+      "spotify clone",
+      "player",
+      "visualizer",
+      "node",
+      "flask",
+      "frontend",
+      "backend"
+    ],
+    "bugs": {
+      "url": "https://github.com/CycloneAddons/rhythmwave/issues"
+    },
+    "homepage": "https://github.com/CycloneAddons/rhythmwave#readme"
+  }
+  
