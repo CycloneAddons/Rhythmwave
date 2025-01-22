@@ -20,10 +20,8 @@ RhythmWave is an advanced music player application with a visualizer feature. It
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/rhythmwave.git
-   cd rhythmwave
-  ```
-  ```shell
-  npm install
-  npm run
-  ```
+   $ git clone https://github.com/yourusername/rhythmwave.git
+   $ cd rhythmwave
+   $ npm install
+   $ npm run
+   ```
