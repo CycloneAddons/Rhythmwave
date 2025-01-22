@@ -1,0 +1,45 @@
+/* Footer styles */
+.footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative; /* Changed from fixed */
+    width: 100%; /* Ensure it spans the full width */
+}
+
+.icons {
+    display: flex;
+    gap: 15px;
+    flex-direction: row;
+}
+
+.icons svg {
+    margin-top: 15px;
+    color: #d6f3ff;
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.3s, filter 0.3s ease-in-out;
+    will-change: transform, filter;
+}
+
+.icons svg:hover {
+    transform: scale(1.2); /* Slight zoom effect */
+    filter: drop-shadow(0 0 5px #17c3bb) drop-shadow(0 0 15px #2c5ed0eb) drop-shadow(0 0 30px #2c5ed0eb) drop-shadow(0 0 45px #00ffdd); /* Neon Glow Effect */
+}
+
+.copyright {
+    margin-top: 10px;
+    font-size: 10px;
+    color: #ffffff;
+    text-align: center;
+    white-space: nowrap;
+    filter: drop-shadow(0 0 5px #17c3bb) drop-shadow(0 0 15px #2c5ed0eb) drop-shadow(0 0 30px #2c5ed0eb) drop-shadow(0 0 45px #00ffdd) ;
+}
+
+@media (max-width: 600px) {
+    .icons {
+        flex-direction: row; /* Ensure icons are always horizontal */
+    }
+}

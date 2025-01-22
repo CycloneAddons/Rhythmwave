@@ -1,24 +1,40 @@
 /* index.css */
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
       text-align: center;
       justify-content: center;
       align-items: center;
 }
 
-body {
-  background-color: #f0f0f0; /* Light gray background */
-  font-family: Arial, sans-serif;
-  color: #333; /* Dark text color for contrast */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+
+/* General scrollbar styling for the entire site */
+body::-webkit-scrollbar {
+  background:  #000a1c76;
+  width: 8px; /* Width of the scrollbar */
 }
 
-#root {
-  width: 100%;
-  height: 100%;
+body::-webkit-scrollbar-thumb {
+  background: linear-gradient(58deg, #17c3bb, #2c5ed0eb); /* Color of the scrollbar thumb */
+  border-radius: 10px; /* Rounded corners */
 }
+
+body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(58deg, #17c3bb, #2c5ed0eb); /* Darker shade when hovered */
+}
+
+
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(180deg, #000000 0%, #142144 100%);
+  /* Dark cyan color */
+  color: #ffffff; /* White text color */
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
