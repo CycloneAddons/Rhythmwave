@@ -1,12 +1,30 @@
-import express from 'express';
 import { Client } from 'youtubei';
+const youtube = new Client();;
+import express from 'express';
+import YTMusicAPI from "lite-ytmusic-api";
+const ytmusic = new YTMusicAPI();
 import cors from 'cors';
 
 const app = express();
-const youtube = new Client();
+app.use(cors()); // Allow cross-origin requests
+app.use(express.json()); // Parse incoming JSON requests
 
-app.use(cors()); // To allow cross-origin requests
-app.use(express.json()); // To parse incoming JSON requests
+
+(async() => {
+    await ytmusic.initialize();
+})();
+
+
+// Helper function to format error messages
+const handleError = (res, error, message) => {
+    console.error(`${message}:`, error); // Log the error to the server console
+    res.status(500).json({
+        error: message,
+        details: error.message || error,
+    });
+};
+
+
 
 // API endpoint to get YouTube search results
 app.get('/api/search', async (req, res) => {
@@ -20,53 +38,42 @@ app.get('/api/search', async (req, res) => {
         const videos = await getYouTubeResults(query);
         res.json(videos);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to fetch search results' });
+        handleError(res, error, 'Failed to fetch search results');
     }
 });
 
 // API endpoint to get next video details based on videoId
 app.get('/api/video/:id', async (req, res) => {
     const videoId = req.params.id;
-
-    try {
-        const videoDetails = await getNextVideoDetails(videoId);
-        res.json(videoDetails);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to fetch video details' });
-    }
+ const data = await ytmusic.getUpNexts(videoId);
+    res.json(data);
 });
-
 const getYouTubeResults = async (query) => {
-    const results = await youtube.search(query, {
-        type: 'video',
-    });
+    let data;
+    try {
+        data = await ytmusic.searchSongs(query);
+    } catch (e) {
+        let results;
+        try {
+            results = await youtube.search(query, {
+                type: 'video',
+            });
+        } catch (searchError) {
+            console.error('YouTube search failed', searchError);
+            return []; // Return empty array if search fails
+        }
 
-    const videos = results.items
-        .filter(video => !video.isLive)
-        .map(video => ({
-            id: video.id,
-            title: video.title,
-            channelName: video.channel.name,
-            thumbnail: video.thumbnails[1]?.url || video.thumbnails[0]?.url || null,
-            duration: formatDuration(video.duration),
-        }));
-
-    return videos;
-};
-
-const getNextVideoDetails = async (videoId) => {
-    const result = await youtube.getVideo(videoId);
-    const video = result.related.items.find(item => !item.isLive);
-
-    return {
-        id: video.id,
-        title: video.title,
-        channelName: video.channel.name,
-        thumbnail: video.thumbnails[1].url || video.thumbnails[0].url,
-        duration: formatDuration(video.duration),
-    };
+        data = results.items
+            .filter((video) => !video.isLive && video.id) // Ensure video.id exists
+            .map((video) => ({
+                videoId: video.id,
+                title: video.title || 'Unknown Title',
+                artists: video.channel?.name || 'Unknown Channel',
+                thumbnail: video.thumbnails[1]?.url || video.thumbnails[0]?.url || null,
+                duration: formatDuration(video.duration || 0),
+            }));
+    }
+    return data;
 };
 
 const formatDuration = (seconds) => {
@@ -76,7 +83,7 @@ const formatDuration = (seconds) => {
 };
 
 // Start the server
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

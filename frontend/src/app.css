@@ -2,7 +2,7 @@
 .app {
   font-family: 'Poppins', sans-serif;
   padding: 16px; /* Reduced by 20% */
-  min-height: 80vh; /* Reduced by 20% */
+  min-height: 100vh; /* Reduced by 20% */
   overflow: hidden;
 }
 
@@ -104,6 +104,9 @@ button:hover {
   background-color: rgba(2, 19, 55, 0.336);
 }
 
+.svgg{
+  overflow: visible !important;
+}
 .result-item img {
   height: 64px; /* Reduced by 20% */
   border-radius: 8px; /* Reduced by 20% */
@@ -119,6 +122,7 @@ button:hover {
   border: none;
   padding: 4px 12px; /* Reduced by 20% */
   color: white;
+  margin-right: 10px;
   border-radius: 40px; /* Reduced by 20% */
 }
 
@@ -134,10 +138,26 @@ button:hover {
   width: 48%; /* Reduced by 20% */
 }
 
+.current-play-container {
+  max-width: 48%; /* Default for large screens or landscape */
+  width: 48%;
+}
+
+@media (orientation: portrait) {
+  .current-play-container {
+    max-width: 100%; /* For portrait mode */
+    width: 100%;
+  }
+  input {
+    width: 100%;
+  }
+}
+
+
 .controls-container button {
   width: 48px; /* Reduced by 20% */
   height: 32px; /* Reduced by 20% */
-  margin: 0 8px; /* Reduced by 20% */
+  margin: 0 8px 11px; /* Reduced by 20% */
   font-size: 16px; /* Reduced by 20% */
   cursor: pointer;
   background: linear-gradient(58deg, #17c3bb, #2c5ed0eb);
@@ -240,3 +260,5 @@ h1 {
     transform: translateY(0);
   }
 }
+
+

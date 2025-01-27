@@ -43,3 +43,6 @@ frontend/public/audios/*
 # OS-specific
 .DS_Store
 Thumbs.db
+
+b.html
+a.js

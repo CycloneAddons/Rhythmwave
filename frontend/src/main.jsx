@@ -4,11 +4,14 @@ import './index.css'; // Custom CSS file if needed
 import App from './App';
 import Footer from "./Footer";
 import Background from './Background';
+import { Loading } from "./Loading";
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-      <Background />
+    <Loading>
+    <Background />
     <App />
     <Footer/>
+    </Loading>
   </React.StrictMode>
 );

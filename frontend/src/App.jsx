@@ -1,7 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBackwardStep, faBackward, faPlay, faPause, faForward, faForwardStep } from '@fortawesome/free-solid-svg-icons';
 import './app.css';
+import { AppContext } from "./Loading";
+import { handleSearch, playSong } from './Utils/handleApi';
+import {handleSongEnd} from './Utils/musicEvents';
+import { handleSkip, handleBackward, handleForward, handlePauseResume, timeUpdate, loadedMetadata, mouseDown, mouseMove, mouseUp, updateProgress } from './Utils/musicControler';
+
+
 
 const App = () => {
   const [ytUrl, setYtUrl] = useState('');
@@ -9,6 +15,8 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlayingRN, setPlayingRN] = useState(false);
+
   const [isPause, setIsPause] = useState(false);
   const [previousSongs, setPreviousSongs] = useState([]);
   const [currentSong, setCurrentSong] = useState({});
@@ -16,209 +24,128 @@ const App = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const { setIsLoading } = useContext(AppContext);
   const progressRef = useRef(null);
   const audioRef = useRef(null);
   const canvasRef = useRef(null);
+  const [queue, setQueue] = useState([]);
+  const [isAutoPlayQueue, setIsAutoPlayQueue] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
 
-  const handleSearch = async () => {
-    if (!ytUrl) return;
-    setLoading(true);
-    try {
-      const response = await fetch(`https://cyclone-youtube-search.onrender.com/api/search?query=${encodeURIComponent(ytUrl)}`);
-      if (response.ok) {
+   
+  const handlePlay = (id, title) => { playSong(id, title, setLoading, setIsLoading, audioRef, setCurrentSong, setAudioUrl, setIsPlaying, currentSong, setPreviousSongs, setPlayingRN, isPlayingRN);};
+  const handleTimeUpdate  = () => { timeUpdate(isDragging, audioRef, setCurrentTime)};  
+  const handleUpdateProgess = (e) => { updateProgress(e, progressRef, setCurrentTime, audioRef, duration)};
+  const handleLoadedMetadata = () => { loadedMetadata(audioRef, setDuration)};
+  const handleMouseDown = (e) => { mouseDown(e, setIsDragging, handleUpdateProgess)};
+  const handleMouseMove = (e) => { mouseMove(e, isDragging, progressRef, duration, setCurrentTime)};
+  const handleMouseUp = (e) => { mouseUp(e, isDragging, setIsDragging, handleUpdateProgess)};
+  
+  const fetchNextSongs = async () => {
+    if (autoPlay && currentSong.id && !isAutoPlayQueue) {
+      try {
+        const response = await fetch(`https://cyclone-youtube-search.onrender.com/api/video/${currentSong.id}`);
         const data = await response.json();
-        setSearchClicked(true)
-        setSearchResults(data);
-        
-      } else {
-        console.error('Error fetching search results:', response.statusText);
-      }
-    } catch (err) {
-      console.error('Error searching:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePlay = async (id, title) => {
-    setLoading(true);
-    setAudioUrl('');
-    setCurrentSong({ id, title });
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-
-    try {
-      const response = await fetch(`http://127.0.0.1:5000/stream?url=${encodeURIComponent(id)}`, { method: 'GET' });
-      if (response.ok) {
-        const data = await response.json();
-        setAudioUrl(`/audios/${data.fileName}`);
-        setIsPlaying(true);
-        if (currentSong.id === id) {
-          return;
+        const nextSongs = data.map(song => ({
+          id: song.videoId,
+          title: song.title,
+          addedBy: "autoplay"
+        }));
+        setQueue((prevQueue) => [...prevQueue, ...nextSongs]);
+        setIsAutoPlayQueue(true);
+        if(!isPlayingRN) {
+          handleSongEnd(queue, handlePlay, setQueue, setPlayingRN, audioRef, setCurrentTime, setAudioUrl, setIsPause, setCurrentSong);
         }
-        setPreviousSongs((prev) => [...prev, { id, title }]);
-      } else {
-        alert('Error retrieving audio');
+      } catch (error) {
+        console.error('Error fetching next songs:', error);
       }
-    } catch (err) {
-      alert('Error processing request');
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleSkip = async () => {
-    try {
-      const response = await fetch(`https://cyclone-youtube-search.onrender.com/api/video/${currentSong.id}`);
-      if (response.ok) {
-        const newSkip = await response.json();
-        handlePlay(newSkip.id, newSkip.title);
-      } else {
-        console.error('Error fetching next video details:', response.statusText);
-      }
-    } catch (err) {
-      console.error('Error skipping to next video:', err);
+  useEffect(() => {
+    if(!autoPlay) {
+      setQueue(queue.filter((song) => song.addedBy !== "autoplay"));
+      setIsAutoPlayQueue(false);
+    } else if(!isAutoPlayQueue && queue.length < 1) {
+    fetchNextSongs();
     }
-  };
-
-  const handlePrevious = () => {
-    if (previousSongs.length > 1) {
-      const prevSongsCopy = [...previousSongs];
-      const prevSong = prevSongsCopy[prevSongsCopy.length - 2];
-      prevSongsCopy.pop();
-      setPreviousSongs(prevSongsCopy);
-      handlePlay(prevSong.id, prevSong.title);
-    } else {
-      alert("No previous song available");
-    }
-  };
-
-  const handlePauseResume = () => {
-    if (!isPause) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
-    setIsPause(!isPause);
-  };
-
-  const handleForward = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime += 10;
-    }
-  };
-
-  const handleBackward = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime -= 10;
-    }
-  };
-
+  }, [autoPlay]);
 
   useEffect(() => {
     if (audioUrl) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = ""; // Clear the source to free memory
+        audioRef.current = null; // Remove reference
+      }
+  
+      // Create a new audio element
       const audioElement = new Audio(audioUrl);
       audioRef.current = audioElement;
-
-      audioElement.play();
       audioElement.addEventListener("timeupdate", handleTimeUpdate);
       audioElement.addEventListener("loadedmetadata", handleLoadedMetadata);
-
-      // Visualization setup (as in your code)
+      audioElement.addEventListener("ended", ()=> handleSongEnd(queue, handlePlay, setQueue, setPlayingRN, audioRef, setCurrentTime, setAudioUrl, setIsPause, setCurrentSong));
+  
+      // Play the audio
+      audioElement.play();
+  
+      // Visualization setup
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 1024; 
-
+      analyser.fftSize = 1024;
+  
       const bufferLength = analyser.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
       const source = audioContext.createMediaElementSource(audioElement);
       source.connect(analyser);
       analyser.connect(audioContext.destination);
-
+  
       const canvas = canvasRef.current;
-      canvas.width = window.innerWidth; // Full width of the window
-      canvas.height = window.innerHeight / 1.2; // Increased height for better display
-      const ctx = canvas.getContext('2d');
-
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-
-      
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const ctx = canvas.getContext("2d");
+  
       const draw = () => {
         analyser.getByteFrequencyData(dataArray);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  
         const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0.3, '#3ec7c9');
-        gradient.addColorStop(1, '#05668d');
-
+        gradient.addColorStop(0.3, "#3ec7c9");
+        gradient.addColorStop(1, "#05668d");
+  
         const barWidth = canvas.width / bufferLength;
         let x = 0;
-
+  
         for (let i = 0; i < bufferLength; i++) {
           const barHeight = dataArray[i] * 2;
           ctx.fillStyle = gradient;
           ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
           x += barWidth + 1;
         }
-
+  
         requestAnimationFrame(draw);
       };
-
+  
       draw();
-
+  
       return () => {
-        audioElement.pause();
-        audioElement.removeEventListener("timeupdate", handleTimeUpdate);
-        audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
-        audioContext.close();
+        if (audioElement) {
+          audioElement.pause();
+          audioElement.src = ""; // Clear the source to free memory
+          audioElement.removeEventListener("timeupdate", handleTimeUpdate);
+          audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
+          audioElement.removeEventListener("ended",()=>  handleSongEnd(queue, handlePlay, setQueue, setPlayingRN, audioRef, setCurrentTime, setAudioUrl, setIsPause, setCurrentSong));
+        }
+          audioContext.close();
       };
     }
   }, [audioUrl]);
-
-  const handleTimeUpdate = () => {
-    if (!isDragging) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    setDuration(audioRef.current.duration);
-  };
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    updateProgress(e); // Update immediately on mouse down
-  };
-  
-
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      updateProgress(e);
-    }
-  };
-
-  const handleMouseUp = () => {
-    if (isDragging) {
-      setIsDragging(false);
-      if (audioRef.current) {
-        audioRef.current.currentTime = currentTime; 
-        audioRef.current.play();
-        
-      }
-    }
-  };
-  
-  const updateProgress = (e) => {
-    const rect = progressRef.current.getBoundingClientRect();
-    const offsetX = Math.min(Math.max(0, e.clientX - rect.left), rect.width);
-    const newTime = (offsetX / rect.width) * duration;
-    setCurrentTime(newTime); // Update UI state
-  };
   
   
+ 
+
+  
+ 
   
   useEffect(() => {
     if (isDragging) {
@@ -233,48 +160,25 @@ const App = () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDragging, currentTime]);
-  
-  useEffect(() => {
-    const syncProgress = () => setCurrentTime(audioRef.current?.currentTime || 0);
-    audioRef.current?.addEventListener("timeupdate", syncProgress);
-  
-    return () => {
-      audioRef.current?.removeEventListener("timeupdate", syncProgress);
-    };
-  }, []);
-  
+  }, [isDragging]);
+ 
 
-  const handleProgressBarClick = (e) => {
-    const rect = progressRef.current.getBoundingClientRect();
-    const offsetX = Math.min(Math.max(0, e.clientX - rect.left), rect.width);
-    const newTime = (offsetX / rect.width) * duration;
-  
-    setCurrentTime(newTime);
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime; 
-      audioRef.current.play(); 
-    }
-  };
+
+
+
 
   useEffect(() => {
-    const progressElement = progressRef.current;
-    if (progressElement) {
-      progressElement.addEventListener("click", handleProgressBarClick);
-    }
-  
-    return () => {
-      if (progressElement) {
-        progressElement.removeEventListener("click", handleProgressBarClick);
-      }
-    };
-  }, [duration]);
-  
+    if (queue.length > 0 && !isPlayingRN) {
+      handleSongEnd(queue, handlePlay, setQueue, setPlayingRN, audioRef, setCurrentTime, setAudioUrl, setIsPause, setCurrentSong);
+        }
+  }, [queue, isPlayingRN]);
+
 
 
   return (
-    <div className="app">
-      <div className={searchClicked ? "": 'main-bar'}>
+  
+<div className='app'>
+    <div className={searchClicked ? "": 'main-bar'}>
       <h1>RhythmWave</h1>
       <div className="search-container">
         <input
@@ -283,25 +187,27 @@ const App = () => {
           onChange={(e) => setYtUrl(e.target.value)}
           placeholder="Search for a song"
         />
-        <button onClick={handleSearch} disabled={loading}>
+        <button onClick={() =>
+          handleSearch(ytUrl, setSearchClicked, setSearchResults, setLoading, setIsLoading)
+        } disabled={loading}>
           Search
         </button>
       </div>
-
-      {loading && <p>Loading...</p>}
       </div>
       {searchResults.length > 0 && (
         <div className="results-container">
           <div className="results-scrollable">
             {searchResults.map((result) => (
-              <div key={result.id} className="result-item" onClick={() => handlePlay(result.id, result.title)}>
+              <div key={result.videoId} className="result-item">
                 <img src={result.thumbnail} alt={result.title} />
                 <div className="result-info">
                   <h3>{result.title}</h3>
-                  <p className='ruploader'>Uploaded By {result.channelName}</p>
+                  <p className='ruploader'>Artists: {result.artists}</p>
                   <p className='rduration'>{result.duration}</p>
                 </div>
-                <button className="play-button">Play</button>
+                <button className="play-button" onClick={() => setQueue([...queue, {id: result.videoId, title: result.title, addedBy: "user" }])}>Add to Queue</button>
+                <button className="play-button" onClick={() => handlePlay(result.videoId, result.title)} >Play</button>
+              
               </div>
             ))}
           </div>
@@ -326,21 +232,32 @@ const App = () => {
           </div>
           
             <div className="controls-container">
-            <button onClick={handlePrevious}>
+            <button onClick={()=>  console.log("clicked")} >
         <FontAwesomeIcon icon={faBackwardStep} />
       </button>
-      <button onClick={handleBackward}>
+      <button onClick={()=> handleBackward(audioRef)} >
         <FontAwesomeIcon icon={faBackward} />
       </button>
-      <button onClick={handlePauseResume}>
+      <button onClick={()=> handlePauseResume(audioRef, isPause, setIsPause)} >
         <FontAwesomeIcon icon={isPause ? faPlay : faPause} />
       </button>
-      <button onClick={handleForward}>
+      <button onClick={()=> handleForward(audioRef)} >
         <FontAwesomeIcon icon={faForward} />
       </button>
-      <button onClick={handleSkip}>
+      <button onClick={()=> handleSongEnd(queue, handlePlay, setQueue, setPlayingRN, audioRef, setCurrentTime, setAudioUrl, setIsPause, setCurrentSong)}>
         <FontAwesomeIcon icon={faForwardStep} />
       </button>
+      <button onClick={()=> setAutoPlay(!autoPlay)}>
+      
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="27" viewBox="6 10 24 24" fill="none"  className="svgg">
+{autoPlay && (
+<g><path d="M14.18 9.58H8.42C4.88 9.58 2 12.46 2 16s2.88 6.42 6.42 6.42h5.76c-1.45-1.74-2.32-3.98-2.32-6.42s.87-4.68 2.32-6.42zM20.72 17.98 24.14 16l-3.42-1.98z" fill="#ffffff" opacity="1" data-original="#000000" ></path><path d="M21.93 7.93c-4.45 0-8.07 3.62-8.07 8.07s3.62 8.07 8.07 8.07S30 20.45 30 16s-3.62-8.07-8.07-8.07zm3.21 9.8-3.42 1.98c-.32.18-.66.27-1 .27-.35 0-.69-.09-1-.27-.63-.36-1-1.01-1-1.73v-3.96c0-.72.37-1.37 1-1.73.62-.36 1.37-.36 2 0l3.42 1.98c.63.36 1 1.01 1 1.73s-.37 1.37-1 1.73z" fill="#ffffff" opacity="1" data-original="#000000" ></path></g>
+)}
+{!autoPlay && (
+<g><path d="M23.58 9.58h-5.76c1.45 1.74 2.32 3.98 2.32 6.42s-.87 4.68-2.32 6.42h5.76c3.54 0 6.42-2.88 6.42-6.42s-2.88-6.42-6.42-6.42z" fill="#ffffff" opacity="1" data-original="#000000"  ></path><path d="M10.07 7.93C5.62 7.93 2 11.55 2 16s3.62 8.07 8.07 8.07 8.07-3.62 8.07-8.07-3.62-8.07-8.07-8.07zM9.07 19c0 .55-.45 1-1 1s-1-.45-1-1v-6c0-.55.45-1 1-1s1 .45 1 1zm4 0c0 .55-.45 1-1 1s-1-.45-1-1v-6c0-.55.45-1 1-1s1 .45 1 1z" fill="#ffffff" opacity="1" data-original="#000000"  ></path></g>
+)}
+</svg>
+</button>
             </div>
 
 
