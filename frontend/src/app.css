@@ -153,15 +153,22 @@ button:hover {
   }
 }
 
+.controls-container {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Adjust if needed */
+  flex-wrap: wrap; /* Ensure they stay in line */
+}
 
 .controls-container button {
-  width: 48px; /* Reduced by 20% */
-  height: 32px; /* Reduced by 20% */
-  margin: 0 8px 11px; /* Reduced by 20% */
-  font-size: 16px; /* Reduced by 20% */
+  width: 48px;
+  height: 32px;
+  margin: 0 8px 11px;
+  font-size: 16px;
   cursor: pointer;
   background: linear-gradient(58deg, #17c3bb, #2c5ed0eb);
   color: #fff;
+  display: inline-block; /* Ensure inline behavior */
 }
 
 .controls-container button:hover {
@@ -261,4 +268,35 @@ h1 {
   }
 }
 
+.nav {
+  display: flex;
+  align-items: center; /* Aligns h2 elements vertically */
+  gap: 100px; /* Adjust spacing between h2 elements */
+  white-space: nowrap; /* Prevents wrapping */
+}
 
+.nav h2 {
+  font-size: 16px; /* Reduced by 20% */
+  cursor: pointer;
+}
+
+.active-tab {
+  border-bottom: 2px solid #17c3bb; /* Reduced by 20% */
+}
+
+.current-img {
+  border-radius: 100px;
+  width: 200px;
+  animation: rotate 15s linear infinite;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.8), 0 0 30px rgba(0, 255, 255, 0.8);
+
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

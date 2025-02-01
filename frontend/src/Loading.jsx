@@ -17,7 +17,7 @@ export const Loading = ({ children }) => {
         if (prev === "Loading..") return "Loading...";
         return "Loading";
       });
-    }, 200); // Adjusted animation interval
+    }, 200);
     return () => clearInterval(interval);
   }, []);
 

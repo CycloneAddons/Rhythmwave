@@ -1,12 +1,11 @@
-/* Footer styles */
 .footer {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    position: relative; /* Changed from fixed */
-    width: 100%; /* Ensure it spans the full width */
+    position: relative; 
+    width: 100%; 
 }
 
 .icons {
@@ -25,7 +24,7 @@
 }
 
 .icons svg:hover {
-    transform: scale(1.2); /* Slight zoom effect */
+    transform: scale(1.2);
     filter: drop-shadow(0 0 5px #17c3bb) drop-shadow(0 0 15px #2c5ed0eb) drop-shadow(0 0 30px #2c5ed0eb) drop-shadow(0 0 45px #00ffdd); /* Neon Glow Effect */
 }
 
@@ -40,6 +39,6 @@
 
 @media (max-width: 600px) {
     .icons {
-        flex-direction: row; /* Ensure icons are always horizontal */
+        flex-direction: row; 
     }
 }

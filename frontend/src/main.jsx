@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css'; // Custom CSS file if needed
+import './index.css';
 import App from './App';
 import Footer from "./Footer";
 import Background from './Background';

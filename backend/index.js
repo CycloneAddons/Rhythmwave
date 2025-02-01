@@ -6,18 +6,16 @@ const ytmusic = new YTMusicAPI();
 import cors from 'cors';
 
 const app = express();
-app.use(cors()); // Allow cross-origin requests
-app.use(express.json()); // Parse incoming JSON requests
-
+app.use(cors()); 
+app.use(express.json()); 
 
 (async() => {
     await ytmusic.initialize();
 })();
 
 
-// Helper function to format error messages
 const handleError = (res, error, message) => {
-    console.error(`${message}:`, error); // Log the error to the server console
+    console.error(`${message}:`, error);
     res.status(500).json({
         error: message,
         details: error.message || error,
@@ -26,7 +24,6 @@ const handleError = (res, error, message) => {
 
 
 
-// API endpoint to get YouTube search results
 app.get('/api/search', async (req, res) => {
     const query = req.query.query;
 
@@ -42,7 +39,6 @@ app.get('/api/search', async (req, res) => {
     }
 });
 
-// API endpoint to get next video details based on videoId
 app.get('/api/video/:id', async (req, res) => {
     const videoId = req.params.id;
  const data = await ytmusic.getUpNexts(videoId);
@@ -60,11 +56,11 @@ const getYouTubeResults = async (query) => {
             });
         } catch (searchError) {
             console.error('YouTube search failed', searchError);
-            return []; // Return empty array if search fails
+            return [];
         }
 
         data = results.items
-            .filter((video) => !video.isLive && video.id) // Ensure video.id exists
+            .filter((video) => !video.isLive && video.id) 
             .map((video) => ({
                 videoId: video.id,
                 title: video.title || 'Unknown Title',
@@ -82,7 +78,6 @@ const formatDuration = (seconds) => {
     return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
 };
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

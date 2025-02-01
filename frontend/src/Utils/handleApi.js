@@ -27,6 +27,7 @@ export const handleSearch = async (ytUrl, setSearchClicked, setSearchResults, se
   export const playSong = async (
     id,
     title,
+    img,
     setLoading,
     setIsLoading,
     audioRef,
@@ -46,7 +47,7 @@ export const handleSearch = async (ytUrl, setSearchClicked, setSearchResults, se
       audioRef.current.pause();
     }
   
-    setCurrentSong({ id, title });
+    setCurrentSong({ id, title, img });
   
     try {
       const response = await fetch(
